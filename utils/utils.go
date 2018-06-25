@@ -22,47 +22,18 @@
  * SOFTWARE.
  */
 
-package main
+package utils
 
 import (
-	"encoding/xml"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"github.com/etiennelndr/archiveservice_generator/data"
+	"strings"
 )
 
-func main() {
-	fmt.Println("MAL API - Service Generator")
+// CanBeNull TODO:
+func CanBeNull(str string) bool {
+	return strings.Contains(str, "true")
+}
 
-	absPath, _ := filepath.Abs("../archiveservice_generator/XML/ServiceDefCOM.xml")
-	xmlFile, err := os.Open(absPath)
-	if err != nil {
-		panic(err)
-	}
-	defer xmlFile.Close()
-
-	b, err := ioutil.ReadAll(xmlFile)
-	if err != nil {
-		panic(err)
-	}
-
-	var q data.Query
-	err = xml.Unmarshal(b, &q)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, area := range q.AreaList {
-		for _, service := range area.Services {
-			fmt.Printf("Service name: %v", service.Name)
-			fmt.Printf(", Service number: %v", service.Number)
-			for _, capabilitySet := range service.Capability {
-				capabilitySet.PrintAllOperations()
-			}
-			fmt.Println("")
-		}
-	}
+// IsAList TODO:
+func IsAList(str string) bool {
+	return strings.Contains(str, "true")
 }
