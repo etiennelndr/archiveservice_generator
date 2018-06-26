@@ -27,6 +27,7 @@ package data
 import (
 	"encoding/xml"
 	"fmt"
+	"strings"
 )
 
 // Query TODO:
@@ -83,11 +84,16 @@ type Extends struct {
 
 // Field TODO:
 type Field struct {
-	XMLName   xml.Name `xml:"field"`
-	Name      string   `xml:"name,attr"`
-	CanBeNull string   `xml:"canBeNull,attr"`
-	Comment   string   `xml:"comment,attr"`
-	FieldType Type     `xml:"type"`
+	XMLName        xml.Name `xml:"field"`
+	Name           string   `xml:"name,attr"`
+	FieldCanBeNull string   `xml:"canBeNull,attr"`
+	Comment        string   `xml:"comment,attr"`
+	FieldType      Type     `xml:"type"`
+}
+
+// CanBeNull TODO:
+func (f Field) CanBeNull() bool {
+	return strings.Contains(f.FieldCanBeNull, "true")
 }
 
 // Type TODO:
@@ -97,6 +103,11 @@ type Type struct {
 	Name    string   `xml:"name,attr"`
 	Service string   `xml:"service,attr"`
 	Area    string   `xml:"area,attr"`
+}
+
+// IsAList TODO:
+func (t Type) IsAList() bool {
+	return strings.Contains(t.List, "true")
 }
 
 // --------------------- ERRORS ---------------------
