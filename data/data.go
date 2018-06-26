@@ -25,6 +25,7 @@
 package data
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"strings"
@@ -38,10 +39,17 @@ type Query struct {
 
 // Area TODO:
 type Area struct {
-	XMLName  xml.Name  `xml:"area"`
+	XMLName xml.Name `xml:"area"`
+
+	Name         string `xml:"name,attr"`
+	Number       string `xml:"number,attr"`
+	Version      string `xml:"version,attr"`
+	Comment      string `xml:"comment,attr"`
+	Requirements string `xml:"requirements,attr"`
+
 	Services []Service `xml:"service"`
-	Datas    []Data    `xml:"dataTypes"`
-	Errors   []Error   `xml:"errors"`
+	Datas    Data      `xml:"dataTypes"`
+	Errs     Errors    `xml:"errors"`
 }
 
 // ------------------- DATA TYPES -------------------
@@ -55,8 +63,11 @@ type Data struct {
 
 // Enumeration TODO:
 type Enumeration struct {
-	XMLName xml.Name `xml:"enumeration"`
-	Items   []Item   `xml:"item"`
+	XMLName       xml.Name `xml:"enumeration"`
+	Name          string   `xml:"name,attr"`
+	ShortFormPart string   `xml:"shortFormPart,attr"`
+	Comment       string   `xml:"comment,attr"`
+	Items         []Item   `xml:"item"`
 }
 
 // Item TODO:
@@ -112,9 +123,15 @@ func (t Type) IsAList() bool {
 
 // --------------------- ERRORS ---------------------
 
+// Errors TODO:
+type Errors struct {
+	XMLName xml.Name `xml:"errors"`
+	Errs    []Error  `xml:"error"`
+}
+
 // Error TODO:
 type Error struct {
-	XMLName xml.Name `xml:"errors"`
+	XMLName xml.Name `xml:"error"`
 	Name    string   `xml:"name,attr"`
 	Number  string   `xml:"number,attr"`
 	Comment string   `xml:"comment,attr"`
@@ -125,12 +142,13 @@ type Error struct {
 // Service structure to describe a service
 type Service struct {
 	XMLName xml.Name `xml:"service"`
-	// Name is the name of the service
-	Name string `xml:"name,attr"`
-	// Number is the number of the service
-	Number string `xml:"number,attr"`
-	//
+
+	Name    string `xml:"name,attr"`
+	Number  string `xml:"number,attr"`
+	Comment string `xml:"comment,attr"`
+
 	Capability []CapabilitySet `xml:"capabilitySet"`
+	Datas      Data            `xml:"dataTypes"`
 }
 
 // CapabilitySet TODO:
@@ -185,10 +203,22 @@ func (op Operation) printOperation() {
 	fmt.Printf("\tOperation -> name = %v, number = %v and comment = %v\n", op.Name, op.Number, op.Comment)
 }
 
+// GenerateOperationHeader TODO;
+func (op Operation) GenerateOperationHeader(buf *bytes.Buffer) {
+	buf.WriteString("func (p *Pr")
+}
+
 // SendIP TODO:
 type SendIP struct {
 	Operation
 	XMLName xml.Name `xml:"sendIP"`
+}
+
+// GenerateSendPattern TODO:
+func (send SendIP) GenerateSendPattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	send.GenerateOperationHeader(buf)
+
 }
 
 // SubmitIP TODO:
@@ -197,10 +227,24 @@ type SubmitIP struct {
 	XMLName xml.Name `xml:"submitIP"`
 }
 
+// GenerateSubmitPattern TODO:
+func (sub SubmitIP) GenerateSubmitPattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	sub.GenerateOperationHeader(buf)
+
+}
+
 // RequestIP TODO:
 type RequestIP struct {
 	Operation
 	XMLName xml.Name `xml:"requestIP"`
+}
+
+// GenerateRequestPattern TODO:
+func (req RequestIP) GenerateRequestPattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	req.GenerateOperationHeader(buf)
+
 }
 
 // InvokeIP TODO:
@@ -209,14 +253,35 @@ type InvokeIP struct {
 	XMLName xml.Name `xml:"invokeIP"`
 }
 
+// GenerateInvokePattern TODO:
+func (inv InvokeIP) GenerateInvokePattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	inv.GenerateOperationHeader(buf)
+
+}
+
 // ProgressIP TODO:
 type ProgressIP struct {
 	Operation
 	XMLName xml.Name `xml:"progressIP"`
 }
 
+// GenerateProgressPattern TODO:
+func (pro ProgressIP) GenerateProgressPattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	pro.GenerateOperationHeader(buf)
+
+}
+
 // PubSubIP TODO:
 type PubSubIP struct {
 	Operation
 	XMLName xml.Name `xml:"pubsubIP"`
+}
+
+// GeneratePubSubPattern TODO:
+func (pubsub PubSubIP) GeneratePubSubPattern(buf *bytes.Buffer) {
+	// First of all, generate the header of the method
+	pubsub.GenerateOperationHeader(buf)
+
 }

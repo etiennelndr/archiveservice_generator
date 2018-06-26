@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-package main
+package src
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -34,28 +35,38 @@ import (
 	"github.com/etiennelndr/archiveservice_generator/data"
 )
 
-func main() {
-	fmt.Println("MAL API - Service Generator")
+// Generator TODO:
+type Generator struct {
+	buffer  *bytes.Buffer
+	xmlRaw  data.Query
+	GenArea Area
+}
 
-	absPath, _ := filepath.Abs("../archiveservice_generator/XML/ServiceDefCOM.xml")
+// OpenAndReadXML TODO:
+func (g Generator) OpenAndReadXML(path string) error {
+	absPath, _ := filepath.Abs("path")
 	xmlFile, err := os.Open(absPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer xmlFile.Close()
 
 	b, err := ioutil.ReadAll(xmlFile)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	var q data.Query
-	err = xml.Unmarshal(b, &q)
+	err = xml.Unmarshal(b, &g.xmlRaw)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	for _, area := range q.AreaList {
+	return nil
+}
+
+// RetrieveInformation TODO:
+func (g Generator) RetrieveInformation() {
+	for _, area := range g.xmlRaw.AreaList {
 		for _, service := range area.Services {
 			fmt.Printf("Service name: %v", service.Name)
 			fmt.Printf(", Service number: %v", service.Number)
@@ -63,6 +74,27 @@ func main() {
 				capabilitySet.PrintAllOperations()
 			}
 			fmt.Println("")
+			fmt.Println("Composite(s):")
+			for _, composite := range service.Datas.Composites {
+				fmt.Println(composite.Name)
+			}
+			fmt.Println("\nEnumeration(s):")
+			for _, enumeration := range service.Datas.Enumerations {
+				fmt.Println(enumeration.Name)
+			}
+			fmt.Println("")
+		}
+		fmt.Println("Composite(s):")
+		for _, composite := range area.Datas.Composites {
+			fmt.Println(composite.Name)
+		}
+		fmt.Println("\nEnumeration(s):")
+		for _, enumeration := range area.Datas.Enumerations {
+			fmt.Println(enumeration.Name)
+		}
+		fmt.Println("\nError(s):")
+		for _, err := range area.Errs.Errs {
+			fmt.Println(err.Name)
 		}
 	}
 }
