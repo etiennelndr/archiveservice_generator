@@ -27,7 +27,6 @@ package src
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -43,8 +42,8 @@ type Generator struct {
 }
 
 // OpenAndReadXML TODO:
-func (g Generator) OpenAndReadXML(path string) error {
-	absPath, _ := filepath.Abs("path")
+func (g *Generator) OpenAndReadXML(path string) error {
+	absPath, _ := filepath.Abs(path)
 	xmlFile, err := os.Open(absPath)
 	if err != nil {
 		return err
@@ -65,36 +64,332 @@ func (g Generator) OpenAndReadXML(path string) error {
 }
 
 // RetrieveInformation TODO:
-func (g Generator) RetrieveInformation() {
+func (g *Generator) RetrieveInformation() {
+	// Retrieve the area and its datas
 	for _, area := range g.xmlRaw.AreaList {
-		for _, service := range area.Services {
-			fmt.Printf("Service name: %v", service.Name)
-			fmt.Printf(", Service number: %v", service.Number)
-			for _, capabilitySet := range service.Capability {
-				capabilitySet.PrintAllOperations()
-			}
-			fmt.Println("")
-			fmt.Println("Composite(s):")
-			for _, composite := range service.Datas.Composites {
-				fmt.Println(composite.Name)
-			}
-			fmt.Println("\nEnumeration(s):")
-			for _, enumeration := range service.Datas.Enumerations {
-				fmt.Println(enumeration.Name)
-			}
-			fmt.Println("")
-		}
-		fmt.Println("Composite(s):")
+		// Firstly, retrieve the Name, Number, Version, Comment and Requirements of the area
+		g.GenArea.Name = area.Name
+		g.GenArea.Number = area.Number
+		g.GenArea.Version = area.Version
+		g.GenArea.Comment = area.Comment
+		g.GenArea.Requirements = area.Requirements
+
+		// Create the composites of this area
 		for _, composite := range area.Datas.Composites {
-			fmt.Println(composite.Name)
+			comp := NewComposite(composite.Name,
+				composite.Comment,
+				composite.ShortFormPart,
+				composite.Extend.TypeToExtend.Name,
+				composite.Extend.TypeToExtend.Area)
+			for _, field := range composite.Fields {
+				f := Field{
+					CanBeNull: field.FieldCanBeNull,
+					Comment:   field.Comment,
+					Name:      field.Name,
+					TypeArea:  field.FieldType.Area,
+					TypeName:  field.FieldType.Name,
+				}
+				// Now add this new field to the composite
+				comp.AddField(f)
+			}
+			// Then add it to the area
+			g.GenArea.AddComposite(comp)
 		}
-		fmt.Println("\nEnumeration(s):")
-		for _, enumeration := range area.Datas.Enumerations {
-			fmt.Println(enumeration.Name)
-		}
-		fmt.Println("\nError(s):")
+
+		// Create the errors of this area
 		for _, err := range area.Errs.Errs {
-			fmt.Println(err.Name)
+			e := Error{
+				Comment: err.Comment,
+				Name:    err.Name,
+				Number:  err.Number,
+			}
+			// Then add it to the area
+			g.GenArea.AddError(e)
 		}
 	}
+
+	// Retrieve the service and its operations
+	for _, area := range g.xmlRaw.AreaList {
+		for _, service := range area.Services {
+			s := Service{
+				Comment: service.Comment,
+				Name:    service.Name,
+				Number:  service.Number,
+			}
+
+			for _, capabilitySet := range service.Capability {
+				for _, op := range capabilitySet.SendOps {
+					AddSendOperation(&s, op)
+				}
+				for _, op := range capabilitySet.SubmitOps {
+					AddSubmitOperation(&s, op)
+				}
+				for _, op := range capabilitySet.RequestOps {
+					AddRequestOperation(&s, op)
+				}
+				for _, op := range capabilitySet.InvokeOps {
+					AddInvokeOPeration(&s, op)
+				}
+				for _, op := range capabilitySet.ProgressOps {
+					AddProgressOperation(&s, op)
+				}
+				for _, op := range capabilitySet.PubSubOps {
+					AddPubSubOperation(&s, op)
+				}
+			}
+			g.GenArea.AddService(s)
+		}
+	}
+}
+
+// AddSendOperation TODO:
+func AddSendOperation(s *Service, operation data.SendIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "send",
+		},
+	}
+
+	// Send Message
+	send := Message{
+		Name: "send",
+	}
+	for _, t := range operation.Message.Send.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		send.AddDataType(data)
+	}
+	op.Pattern.AddMessage(send)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
+}
+
+// AddSubmitOperation TODO:
+func AddSubmitOperation(s *Service, operation data.SubmitIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "submit",
+		},
+	}
+
+	// Submit Message
+	submit := Message{
+		Name: "submit",
+	}
+	for _, t := range operation.Message.Submit.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		submit.AddDataType(data)
+	}
+	op.Pattern.AddMessage(submit)
+
+	// Ack Message
+	ack := Message{
+		Name: "ack",
+	}
+	op.Pattern.AddMessage(ack)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
+}
+
+// AddRequestOperation TODO:
+func AddRequestOperation(s *Service, operation data.RequestIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "request",
+		},
+	}
+
+	// Request Message
+	request := Message{
+		Name: "request",
+	}
+	for _, t := range operation.Message.Request.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		request.AddDataType(data)
+	}
+	op.Pattern.AddMessage(request)
+
+	// Response Message
+	response := Message{
+		Name: "response",
+	}
+	for _, t := range operation.Message.Response.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		response.AddDataType(data)
+	}
+	op.Pattern.AddMessage(response)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
+}
+
+// AddInvokeOPeration TODO:
+func AddInvokeOPeration(s *Service, operation data.InvokeIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "invoke",
+		},
+	}
+
+	// Invoke Message
+	invoke := Message{
+		Name: "invoke",
+	}
+	for _, t := range operation.Message.Invoke.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		invoke.AddDataType(data)
+	}
+	op.Pattern.AddMessage(invoke)
+
+	// Ack Message
+	ack := Message{
+		Name: "ack",
+	}
+	op.Pattern.AddMessage(ack)
+
+	// Response Message
+	response := Message{
+		Name: "response",
+	}
+	for _, t := range operation.Message.Response.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		response.AddDataType(data)
+	}
+	op.Pattern.AddMessage(response)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
+}
+
+// AddProgressOperation TODO:
+func AddProgressOperation(s *Service, operation data.ProgressIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "progress",
+		},
+	}
+
+	// Invoke Message
+	progress := Message{
+		Name: "progress",
+	}
+	for _, t := range operation.Message.Progress.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		progress.AddDataType(data)
+	}
+	op.Pattern.AddMessage(progress)
+
+	// Invoke Message
+	update := Message{
+		Name: "update",
+	}
+	for _, t := range operation.Message.Update.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		update.AddDataType(data)
+	}
+	op.Pattern.AddMessage(update)
+
+	// Response Message
+	response := Message{
+		Name: "response",
+	}
+	for _, t := range operation.Message.Response.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		response.AddDataType(data)
+	}
+	op.Pattern.AddMessage(response)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
+}
+
+// AddPubSubOperation TODO:
+func AddPubSubOperation(s *Service, operation data.PubSubIP) {
+	op := Operation{
+		Comment: operation.Comment,
+		Name:    operation.Name,
+		Number:  operation.Number,
+		Pattern: PatternInteraction{
+			Name: "pubsub",
+		},
+	}
+
+	// PublishNotify Message
+	publishNotify := Message{
+		Name: "publishNotify",
+	}
+	for _, t := range operation.Message.PublishNotify.Types {
+		data := DataType{
+			Area:     t.Area,
+			DataName: t.Name,
+			List:     t.List,
+			Service:  t.Service,
+		}
+		publishNotify.AddDataType(data)
+	}
+	op.Pattern.AddMessage(publishNotify)
+
+	// Add this new operation to the service
+	s.AddOperation(op)
 }

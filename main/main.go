@@ -35,10 +35,13 @@ func main() {
 	fmt.Println("MAL API - Service Generator")
 
 	// Variable for the generator
-	var g src.Generator
+	var g = new(src.Generator)
 
 	// Open and read the xml file
-	g.OpenAndReadXML("../archiveservice_generator/XML/ServiceDefCOM.xml")
+	err := g.OpenAndReadXML("../archiveservice_generator/XML/ServiceDefCOM.xml")
+	if err != nil {
+		panic(err)
+	}
 
 	// Now we can retrieve the datas
 	g.RetrieveInformation()
@@ -47,4 +50,5 @@ func main() {
 		panic(errors.New("Can't retrieve the Area"))
 	}
 
+	fmt.Println(g.GenArea.Services)
 }

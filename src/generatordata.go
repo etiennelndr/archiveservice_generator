@@ -32,9 +32,9 @@ type Area struct {
 	Comment      string
 	Requirements string
 
-	Services  []Service
-	DataTypes []DataType
-	Errors    []Error
+	Services   []Service
+	Composites []Composite
+	Errors     []Error
 }
 
 // CreateArea creates a new area and returns it
@@ -47,6 +47,21 @@ func CreateArea(name string, number string, version string, comment string, requ
 		Requirements: requirements,
 	}
 	return area
+}
+
+// AddComposite TODO:
+func (a *Area) AddComposite(c Composite) {
+	a.Composites = append(a.Composites, c)
+}
+
+// AddError TODO:
+func (a *Area) AddError(e Error) {
+	a.Errors = append(a.Errors, e)
+}
+
+// AddService TODO:
+func (a *Area) AddService(s Service) {
+	a.Services = append(a.Services, s)
 }
 
 // Service TODO:
@@ -70,12 +85,12 @@ func CreateService(name string, number string, comment string) Service {
 }
 
 // AddOperation adds a new operation to the service
-func (s Service) AddOperation(op Operation) {
+func (s *Service) AddOperation(op Operation) {
 	s.Operations = append(s.Operations, op)
 }
 
 // AddDatatype adds a new data type to the service
-func (s Service) AddDatatype(data DataType) {
+func (s *Service) AddDatatype(data DataType) {
 	s.DataTypes = append(s.DataTypes, data)
 }
 
@@ -94,16 +109,75 @@ type PatternInteraction struct {
 	Messages []Message
 }
 
+// AddMessage TODO:
+func (p *PatternInteraction) AddMessage(m Message) {
+	p.Messages = append(p.Messages, m)
+}
+
 // Message TODO:
 type Message struct {
 	Name      string
 	DataTypes []DataType
 }
 
+// AddDataType TODO:
+func (m *Message) AddDataType(d DataType) {
+	m.DataTypes = append(m.DataTypes, d)
+}
+
 // DataType TODO:
 type DataType struct {
+	DataName      string
+	DataComment   string
+	ShortFormPart string
+	List          string
+	Service       string
+	Area          string
+}
+
+// Composite TODO:
+type Composite struct {
+	DataType
+	// Fields
+	Fields []Field
+	// Extends
+	NameOfTypeToExtend string
+	AreaOfTypeToExtend string
+}
+
+// NewComposite create a new composite
+func NewComposite(dataName string, dataComment string, shortFormPart string, nameOfTypeToExtend string, areaOfTypeToExtend string) Composite {
+	comp := Composite{
+		DataType: DataType{
+			DataName:      dataName,
+			DataComment:   dataComment,
+			ShortFormPart: shortFormPart,
+		},
+		NameOfTypeToExtend: nameOfTypeToExtend,
+		AreaOfTypeToExtend: areaOfTypeToExtend,
+	}
+
+	return comp
+}
+
+// AddField add a new field to the composite
+func (c *Composite) AddField(f Field) {
+	c.Fields = append(c.Fields, f)
+}
+
+// Field TODO:
+type Field struct {
+	Name      string
+	CanBeNull string
+	Comment   string
+	// Type
+	TypeName string
+	TypeArea string
 }
 
 // Error TODO:
 type Error struct {
+	Name    string
+	Number  string
+	Comment string
 }

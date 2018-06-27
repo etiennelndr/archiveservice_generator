@@ -85,6 +85,7 @@ type Composite struct {
 	ShortFormPart string   `xml:"shortFormPart,attr"`
 	Comment       string   `xml:"comment,attr"`
 	Extend        Extends  `xml:"extends"`
+	Fields        []Field  `xml:"field"`
 }
 
 // Extends TODO:
@@ -208,80 +209,123 @@ func (op Operation) GenerateOperationHeader(buf *bytes.Buffer) {
 	buf.WriteString("func (p *Pr")
 }
 
+// -------------------- Patterns --------------------
+
 // SendIP TODO:
 type SendIP struct {
 	Operation
 	XMLName xml.Name `xml:"sendIP"`
-}
-
-// GenerateSendPattern TODO:
-func (send SendIP) GenerateSendPattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	send.GenerateOperationHeader(buf)
-
+	Message Messages `xml:"messages"`
 }
 
 // SubmitIP TODO:
 type SubmitIP struct {
 	Operation
 	XMLName xml.Name `xml:"submitIP"`
-}
-
-// GenerateSubmitPattern TODO:
-func (sub SubmitIP) GenerateSubmitPattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	sub.GenerateOperationHeader(buf)
-
+	Message Messages `xml:"messages"`
 }
 
 // RequestIP TODO:
 type RequestIP struct {
 	Operation
 	XMLName xml.Name `xml:"requestIP"`
-}
-
-// GenerateRequestPattern TODO:
-func (req RequestIP) GenerateRequestPattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	req.GenerateOperationHeader(buf)
-
+	Message Messages `xml:"messages"`
 }
 
 // InvokeIP TODO:
 type InvokeIP struct {
 	Operation
 	XMLName xml.Name `xml:"invokeIP"`
-}
-
-// GenerateInvokePattern TODO:
-func (inv InvokeIP) GenerateInvokePattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	inv.GenerateOperationHeader(buf)
-
+	Message Messages `xml:"messages"`
 }
 
 // ProgressIP TODO:
 type ProgressIP struct {
 	Operation
 	XMLName xml.Name `xml:"progressIP"`
-}
-
-// GenerateProgressPattern TODO:
-func (pro ProgressIP) GenerateProgressPattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	pro.GenerateOperationHeader(buf)
-
+	Message Messages `xml:"messages"`
 }
 
 // PubSubIP TODO:
 type PubSubIP struct {
 	Operation
 	XMLName xml.Name `xml:"pubsubIP"`
+	Message Messages `xml:"messages"`
 }
 
-// GeneratePubSubPattern TODO:
-func (pubsub PubSubIP) GeneratePubSubPattern(buf *bytes.Buffer) {
-	// First of all, generate the header of the method
-	pubsub.GenerateOperationHeader(buf)
+// -------------------- Pattern messages --------------------
 
+// Messages TODO:
+type Messages struct {
+	XMLName       xml.Name             `xml:"messages"`
+	Invoke        InvokeMessage        `xml:"invoke"`
+	Ack           AckMessage           `xml:"acknowledgement"`
+	Response      ResponseMessage      `xml:"response"`
+	Progress      ProgressMessage      `xml:"progress"`
+	Update        UpdateMessage        `xml:"update"`
+	Request       RequestMessage       `xml:"request"`
+	Submit        SubmitMessage        `xml:"submit"`
+	PublishNotify PublishNotifyMessage `xml:"publishNotify"`
+	Send          SendMessage          `xml:"send"`
+}
+
+// InvokeMessage TODO:
+type InvokeMessage struct {
+	XMLName xml.Name `xml:"invoke"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// AckMessage TODO:
+type AckMessage struct {
+	XMLName xml.Name `xml:"acknowledgement"`
+}
+
+// ResponseMessage TODO:
+type ResponseMessage struct {
+	XMLName xml.Name `xml:"response"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// ProgressMessage TODO:
+type ProgressMessage struct {
+	XMLName xml.Name `xml:"progress"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// UpdateMessage TODO:
+type UpdateMessage struct {
+	XMLName xml.Name `xml:"update"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// RequestMessage TODO:
+type RequestMessage struct {
+	XMLName xml.Name `xml:"request"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// SubmitMessage TODO:
+type SubmitMessage struct {
+	XMLName xml.Name `xml:"submit"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// PublishNotifyMessage TODO:
+type PublishNotifyMessage struct {
+	XMLName xml.Name `xml:"publishNotify"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
+}
+
+// SendMessage TODO:
+type SendMessage struct {
+	XMLName xml.Name `xml:"send"`
+	Comment string   `xml:"comment,attr"`
+	Types   []Type   `xml:"type"`
 }
