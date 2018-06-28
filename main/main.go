@@ -27,6 +27,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/etiennelndr/archiveservice_generator/src"
 )
@@ -50,5 +51,19 @@ func main() {
 		panic(errors.New("Can't retrieve the Area"))
 	}
 
-	fmt.Println(g.GenArea.Services)
+	//fmt.Println(g.GenArea.Services)
+	for _, service := range g.GenArea.Services {
+		fmt.Println(strings.ToUpper(service.Name))
+		fmt.Println("Operations:")
+		for _, op := range service.Operations {
+			fmt.Println(op.Name)
+		}
+		fmt.Println("Datas:")
+		for _, comp := range service.Composites {
+			fmt.Println("Composite: " + comp.Name)
+		}
+		for _, enum := range service.Enumerations {
+			fmt.Println("Enumeration: " + enum.Name)
+		}
+	}
 }

@@ -70,8 +70,9 @@ type Service struct {
 	Number  string
 	Comment string
 
-	Operations []Operation
-	DataTypes  []DataType
+	Operations   []Operation
+	Composites   []Composite
+	Enumerations []Enumeration
 }
 
 // CreateService creates a new service and returns it
@@ -89,9 +90,14 @@ func (s *Service) AddOperation(op Operation) {
 	s.Operations = append(s.Operations, op)
 }
 
-// AddDatatype adds a new data type to the service
-func (s *Service) AddDatatype(data DataType) {
-	s.DataTypes = append(s.DataTypes, data)
+// AddComposite adds a new composite type to the service
+func (s *Service) AddComposite(data Composite) {
+	s.Composites = append(s.Composites, data)
+}
+
+// AddEnumeration adds a new composite type to the service
+func (s *Service) AddEnumeration(data Enumeration) {
+	s.Enumerations = append(s.Enumerations, data)
 }
 
 // Operation TODO:
@@ -116,19 +122,19 @@ func (p *PatternInteraction) AddMessage(m Message) {
 
 // Message TODO:
 type Message struct {
-	Name      string
-	DataTypes []DataType
+	Name  string
+	Types []Type
 }
 
-// AddDataType TODO:
-func (m *Message) AddDataType(d DataType) {
-	m.DataTypes = append(m.DataTypes, d)
+// AddType TODO:
+func (m *Message) AddType(d Type) {
+	m.Types = append(m.Types, d)
 }
 
-// DataType TODO:
-type DataType struct {
-	DataName      string
-	DataComment   string
+// Type TODO:
+type Type struct {
+	Name          string
+	Comment       string
 	ShortFormPart string
 	List          string
 	Service       string
@@ -137,7 +143,9 @@ type DataType struct {
 
 // Composite TODO:
 type Composite struct {
-	DataType
+	Name          string
+	ShortFormPart string
+	Comment       string
 	// Fields
 	Fields []Field
 	// Extends
@@ -146,13 +154,11 @@ type Composite struct {
 }
 
 // NewComposite create a new composite
-func NewComposite(dataName string, dataComment string, shortFormPart string, nameOfTypeToExtend string, areaOfTypeToExtend string) Composite {
+func NewComposite(name string, comment string, shortFormPart string, nameOfTypeToExtend string, areaOfTypeToExtend string) Composite {
 	comp := Composite{
-		DataType: DataType{
-			DataName:      dataName,
-			DataComment:   dataComment,
-			ShortFormPart: shortFormPart,
-		},
+		Name:               name,
+		Comment:            comment,
+		ShortFormPart:      shortFormPart,
 		NameOfTypeToExtend: nameOfTypeToExtend,
 		AreaOfTypeToExtend: areaOfTypeToExtend,
 	}
@@ -173,6 +179,26 @@ type Field struct {
 	// Type
 	TypeName string
 	TypeArea string
+}
+
+// Enumeration TODO:
+type Enumeration struct {
+	Name          string
+	ShortFormPart string
+	Comment       string
+	Items         []Item
+}
+
+// AddItem adds a new item to the enumeration
+func (e *Enumeration) AddItem(i Item) {
+	e.Items = append(e.Items, i)
+}
+
+// Item TODO:
+type Item struct {
+	Value   string
+	NValue  string
+	Comment string
 }
 
 // Error TODO:

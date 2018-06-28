@@ -137,6 +137,46 @@ func (g *Generator) RetrieveInformation() {
 					AddPubSubOperation(&s, op)
 				}
 			}
+
+			// Retrieve the service data types
+			for _, comp := range service.Datas.Composites {
+				c := Composite{
+					Name:               comp.Name,
+					Comment:            comp.Comment,
+					ShortFormPart:      comp.ShortFormPart,
+					NameOfTypeToExtend: comp.Extend.TypeToExtend.Name,
+					AreaOfTypeToExtend: comp.Extend.TypeToExtend.Area,
+				}
+				for _, field := range comp.Fields {
+					f := Field{
+						CanBeNull: field.FieldCanBeNull,
+						Comment:   field.Comment,
+						Name:      field.Name,
+						TypeArea:  field.FieldType.Area,
+						TypeName:  field.FieldType.Name,
+					}
+					c.AddField(f)
+				}
+				s.AddComposite(c)
+			}
+
+			for _, enum := range service.Datas.Enumerations {
+				e := Enumeration{
+					Comment:       enum.Comment,
+					Name:          enum.Name,
+					ShortFormPart: enum.ShortFormPart,
+				}
+				for _, item := range enum.Items {
+					i := Item{
+						Comment: item.Comment,
+						NValue:  item.NValue,
+						Value:   item.Value,
+					}
+					e.AddItem(i)
+				}
+				s.AddEnumeration(e)
+			}
+
 			g.GenArea.AddService(s)
 		}
 	}
@@ -158,13 +198,13 @@ func AddSendOperation(s *Service, operation data.SendIP) {
 		Name: "send",
 	}
 	for _, t := range operation.Message.Send.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		send.AddDataType(data)
+		send.AddType(data)
 	}
 	op.Pattern.AddMessage(send)
 
@@ -188,13 +228,13 @@ func AddSubmitOperation(s *Service, operation data.SubmitIP) {
 		Name: "submit",
 	}
 	for _, t := range operation.Message.Submit.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		submit.AddDataType(data)
+		submit.AddType(data)
 	}
 	op.Pattern.AddMessage(submit)
 
@@ -224,13 +264,13 @@ func AddRequestOperation(s *Service, operation data.RequestIP) {
 		Name: "request",
 	}
 	for _, t := range operation.Message.Request.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		request.AddDataType(data)
+		request.AddType(data)
 	}
 	op.Pattern.AddMessage(request)
 
@@ -239,13 +279,13 @@ func AddRequestOperation(s *Service, operation data.RequestIP) {
 		Name: "response",
 	}
 	for _, t := range operation.Message.Response.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		response.AddDataType(data)
+		response.AddType(data)
 	}
 	op.Pattern.AddMessage(response)
 
@@ -269,13 +309,13 @@ func AddInvokeOPeration(s *Service, operation data.InvokeIP) {
 		Name: "invoke",
 	}
 	for _, t := range operation.Message.Invoke.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		invoke.AddDataType(data)
+		invoke.AddType(data)
 	}
 	op.Pattern.AddMessage(invoke)
 
@@ -290,13 +330,13 @@ func AddInvokeOPeration(s *Service, operation data.InvokeIP) {
 		Name: "response",
 	}
 	for _, t := range operation.Message.Response.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		response.AddDataType(data)
+		response.AddType(data)
 	}
 	op.Pattern.AddMessage(response)
 
@@ -320,13 +360,13 @@ func AddProgressOperation(s *Service, operation data.ProgressIP) {
 		Name: "progress",
 	}
 	for _, t := range operation.Message.Progress.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		progress.AddDataType(data)
+		progress.AddType(data)
 	}
 	op.Pattern.AddMessage(progress)
 
@@ -335,13 +375,13 @@ func AddProgressOperation(s *Service, operation data.ProgressIP) {
 		Name: "update",
 	}
 	for _, t := range operation.Message.Update.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		update.AddDataType(data)
+		update.AddType(data)
 	}
 	op.Pattern.AddMessage(update)
 
@@ -350,13 +390,13 @@ func AddProgressOperation(s *Service, operation data.ProgressIP) {
 		Name: "response",
 	}
 	for _, t := range operation.Message.Response.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		response.AddDataType(data)
+		response.AddType(data)
 	}
 	op.Pattern.AddMessage(response)
 
@@ -380,13 +420,13 @@ func AddPubSubOperation(s *Service, operation data.PubSubIP) {
 		Name: "publishNotify",
 	}
 	for _, t := range operation.Message.PublishNotify.Types {
-		data := DataType{
-			Area:     t.Area,
-			DataName: t.Name,
-			List:     t.List,
-			Service:  t.Service,
+		data := Type{
+			Area:    t.Area,
+			Name:    t.Name,
+			List:    t.List,
+			Service: t.Service,
 		}
-		publishNotify.AddDataType(data)
+		publishNotify.AddType(data)
 	}
 	op.Pattern.AddMessage(publishNotify)
 
