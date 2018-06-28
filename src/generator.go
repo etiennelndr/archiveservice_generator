@@ -27,6 +27,7 @@ package src
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -172,26 +173,41 @@ func (g *Generator) InitDirectories() error {
 
 // CreateService TODO:
 func (g *Generator) CreateService() error {
+	for _, service := range g.GenArea.Services {
+		fmt.Println("> Service: " + service.Name)
+	}
 	return nil
 }
 
 // CreateProvider TODO:
 func (g *Generator) CreateProvider() error {
+	for _, service := range g.GenArea.Services {
+		fmt.Println("> Provider: " + service.Name)
+	}
 	return nil
 }
 
 // CreateConsumer TODO:
 func (g *Generator) CreateConsumer() error {
+	for _, service := range g.GenArea.Services {
+		fmt.Println("> Consumer: " + service.Name)
+	}
 	return nil
 }
 
 // CreateData TODO:
 func (g *Generator) CreateData() error {
+	for _, data := range g.GenArea.Composites {
+		fmt.Println("> Data: " + data.Name)
+	}
 	return nil
 }
 
 // CreateErrors TODO:
 func (g *Generator) CreateErrors() error {
+	for _, err := range g.GenArea.Errors {
+		fmt.Println("> Error: " + err.Name)
+	}
 	return nil
 }
 
@@ -208,22 +224,7 @@ func (g *Generator) RetrieveInformation() {
 
 		// Create the composites of this area
 		for _, composite := range area.Datas.Composites {
-			comp := NewComposite(composite.Name,
-				composite.Comment,
-				composite.ShortFormPart,
-				composite.Extend.TypeToExtend.Name,
-				composite.Extend.TypeToExtend.Area)
-			for _, field := range composite.Fields {
-				f := Field{
-					CanBeNull: field.FieldCanBeNull,
-					Comment:   field.Comment,
-					Name:      field.Name,
-					TypeArea:  field.FieldType.Area,
-					TypeName:  field.FieldType.Name,
-				}
-				// Now add this new field to the composite
-				comp.AddField(f)
-			}
+			comp := createComposite(composite)
 			// Then add it to the area
 			g.GenArea.AddComposite(comp)
 		}
@@ -273,23 +274,7 @@ func (g *Generator) RetrieveInformation() {
 
 			// Retrieve the service data types
 			for _, comp := range service.Datas.Composites {
-				c := Composite{
-					Name:               comp.Name,
-					Comment:            comp.Comment,
-					ShortFormPart:      comp.ShortFormPart,
-					NameOfTypeToExtend: comp.Extend.TypeToExtend.Name,
-					AreaOfTypeToExtend: comp.Extend.TypeToExtend.Area,
-				}
-				for _, field := range comp.Fields {
-					f := Field{
-						CanBeNull: field.FieldCanBeNull,
-						Comment:   field.Comment,
-						Name:      field.Name,
-						TypeArea:  field.FieldType.Area,
-						TypeName:  field.FieldType.Name,
-					}
-					c.AddField(f)
-				}
+				c := createComposite(comp)
 				s.AddComposite(c)
 			}
 
@@ -314,6 +299,28 @@ func (g *Generator) RetrieveInformation() {
 			g.GenArea.AddService(s)
 		}
 	}
+}
+
+func createComposite(composite data.Composite) Composite {
+	c := Composite{
+		Name:               composite.Name,
+		Comment:            composite.Comment,
+		ShortFormPart:      composite.ShortFormPart,
+		NameOfTypeToExtend: composite.Extend.TypeToExtend.Name,
+		AreaOfTypeToExtend: composite.Extend.TypeToExtend.Area,
+	}
+	for _, field := range composite.Fields {
+		f := Field{
+			CanBeNull: field.FieldCanBeNull,
+			Comment:   field.Comment,
+			Name:      field.Name,
+			TypeArea:  field.FieldType.Area,
+			TypeName:  field.FieldType.Name,
+		}
+		c.AddField(f)
+	}
+
+	return c
 }
 
 // AddSendOperation TODO:

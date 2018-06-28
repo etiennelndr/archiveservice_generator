@@ -24,13 +24,17 @@
 
 package constants
 
+const (
+	year = "2018"
+)
+
 var (
 	// License is used to write the License in the header of a file
 	License = []string{
 		"/**\n",
 		" * MIT License",
 		" *\n",
-		" * Copyright (c) 2018 CNES\n",
+		" * Copyright (c) " + year + " CNES\n",
 		" *\n",
 		" * Permission is hereby granted, free of charge, to any person obtaining a copy\n",
 		" * of this software and associated documentation files (the \"Software\"), to deal\n",
