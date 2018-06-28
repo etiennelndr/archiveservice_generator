@@ -22,53 +22,37 @@
  * SOFTWARE.
  */
 
-package main
+package utils
 
 import (
-	"errors"
-	"fmt"
-	"strings"
+	"os"
 
-	"github.com/etiennelndr/archiveservice_generator/src"
+	"github.com/etiennelndr/archiveservice_generator/constants"
 )
 
-func main() {
-	fmt.Println("MAL API - Service Generator")
+// WriteLicense is used to write the License in a specific file
+func WriteLicense(file *os.File) error {
+	for i := 0; i < len(constants.License); i++ {
+		_, err := file.Write([]byte(constants.License[i]))
+		if err != nil {
+			return err
+		}
+	}
 
-	// Variable for the generator
-	var g = new(src.Generator)
+	return nil
+}
 
-	// Open and read the xml file
-	err := g.OpenAndReadXML("../archiveservice_generator/XML/ServiceDefCOM.xml")
+// WriteHeader writes the header of a file (License + package name)
+func WriteHeader(file *os.File, packageName string) error {
+	err := WriteLicense(file)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	// Now we can retrieve the datas
-	g.RetrieveInformation()
-
-	if g.GenArea.Name == "" {
-		panic(errors.New("Can't retrieve the Area"))
-	}
-
-	//fmt.Println(g.GenArea.Services)
-	for _, service := range g.GenArea.Services {
-		fmt.Println(strings.ToUpper(service.Name))
-		fmt.Println("Operations:")
-		for _, op := range service.Operations {
-			fmt.Println(op.Name)
-		}
-		fmt.Println("Datas:")
-		for _, comp := range service.Composites {
-			fmt.Println("Composite: " + comp.Name)
-		}
-		for _, enum := range service.Enumerations {
-			fmt.Println("Enumeration: " + enum.Name)
-		}
-	}
-
-	err = g.InitDirectories()
+	_, err = file.Write([]byte("package " + packageName + "\n"))
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }

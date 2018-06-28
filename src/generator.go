@@ -30,8 +30,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/etiennelndr/archiveservice_generator/data"
+	"github.com/etiennelndr/archiveservice_generator/utils"
 )
 
 // Generator TODO:
@@ -60,6 +62,136 @@ func (g *Generator) OpenAndReadXML(path string) error {
 		return err
 	}
 
+	return nil
+}
+
+// InitDirectories create directories and files for each service
+func (g *Generator) InitDirectories() error {
+	path := "../../../../../"
+	testpath := path + "Tests/"
+	filepath, err := filepath.Abs(testpath)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(filepath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	for _, service := range g.GenArea.Services {
+		// nameservice
+		serviceabspath := testpath + strings.ToLower(service.Name) + "service/"
+		err = os.MkdirAll(serviceabspath, os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		// name
+		name := serviceabspath + strings.ToLower(service.Name) + "/"
+		err = os.MkdirAll(name, os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		// service
+		err = os.MkdirAll(name+"service/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err := os.Create(name + "service/service.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "service")
+		f.Close()
+
+		// consumer
+		err = os.MkdirAll(name+"consumer/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(name + "consumer/consumer.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "consumer")
+		f.Close()
+
+		// provider
+		err = os.MkdirAll(name+"provider/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(name + "provider/provider.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "provider")
+		f.Close()
+
+		// data
+		err = os.MkdirAll(serviceabspath+"data/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(serviceabspath + "data/data.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "data")
+		f.Close()
+
+		// errors
+		err = os.MkdirAll(serviceabspath+"errors/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(serviceabspath + "errors/errors.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "errors")
+		f.Close()
+
+		// tests
+		err = os.MkdirAll(serviceabspath+"tests/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(serviceabspath + "tests/tests.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "tests")
+		f.Close()
+	}
+
+	return nil
+}
+
+// CreateService TODO:
+func (g *Generator) CreateService() error {
+	return nil
+}
+
+// CreateProvider TODO:
+func (g *Generator) CreateProvider() error {
+	return nil
+}
+
+// CreateConsumer TODO:
+func (g *Generator) CreateConsumer() error {
+	return nil
+}
+
+// CreateData TODO:
+func (g *Generator) CreateData() error {
+	return nil
+}
+
+// CreateErrors TODO:
+func (g *Generator) CreateErrors() error {
 	return nil
 }
 
@@ -117,6 +249,7 @@ func (g *Generator) RetrieveInformation() {
 				Number:  service.Number,
 			}
 
+			// Retrieve all of the operations
 			for _, capabilitySet := range service.Capability {
 				for _, op := range capabilitySet.SendOps {
 					AddSendOperation(&s, op)
@@ -177,6 +310,7 @@ func (g *Generator) RetrieveInformation() {
 				s.AddEnumeration(e)
 			}
 
+			// Store this service in the area
 			g.GenArea.AddService(s)
 		}
 	}
