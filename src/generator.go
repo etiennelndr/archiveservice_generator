@@ -82,7 +82,7 @@ func (g *Generator) InitDirectories() error {
 
 	for _, service := range g.GenArea.Services {
 		// nameservice
-		serviceabspath := testpath + strings.ToLower(service.Name) + "service/"
+		serviceabspath := filepath + "/" + strings.ToLower(service.Name) + "service/"
 		err = os.MkdirAll(serviceabspath, os.ModePerm)
 		if err != nil {
 			return err
@@ -173,8 +173,38 @@ func (g *Generator) InitDirectories() error {
 
 // CreateService TODO:
 func (g *Generator) CreateService() error {
+	path := "../../../../../"
+	testpath := path + "Tests/"
+	filepath, err := filepath.Abs(testpath)
+	if err != nil {
+		return err
+	}
+
 	for _, service := range g.GenArea.Services {
-		fmt.Println("> Service: " + service.Name)
+		var buffer *bytes.Buffer
+		serviceNameToLower := strings.ToLower(service.Name)
+		servicefile := filepath + "/" + serviceNameToLower + "service/" + serviceNameToLower + "/service/service.go"
+
+		file, err := os.Open(servicefile)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		// TODO: Create imports
+
+		// Create the structure for the Service
+		buffer.WriteString("type " + service.Name + "Service struct {\n")
+		buffer.WriteString("\tAreaIdentifier mal.Identifier\n")
+		buffer.WriteString("\tServiceIdentifier mal.Identifier\n")
+		buffer.WriteString("\tAreaNumber mal.UShort\n")
+		buffer.WriteString("\tServiceNumber mal.Integer\n")
+		buffer.WriteString("\tAreaVersion mal.UOctet\n\n")
+		buffer.WriteString("\trunning bool\n")
+		buffer.WriteString("\twg sync.WaitGroup\n")
+		buffer.WriteString("}\n")
+
+		file.Write(buffer.Bytes())
 	}
 	return nil
 }

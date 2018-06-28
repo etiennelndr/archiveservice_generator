@@ -71,4 +71,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Create each service
+	err = g.CreateService()
+	if err != nil {
+		panic(err)
+	}
 }
