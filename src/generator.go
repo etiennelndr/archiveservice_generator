@@ -171,8 +171,32 @@ func (g *Generator) InitDirectories() error {
 	return nil
 }
 
-// CreateService TODO:
-func (g *Generator) CreateService() error {
+// CreateInformation TODO:
+func (g *Generator) CreateInformation() error {
+	err := g.createService()
+	if err != nil {
+		return err
+	}
+
+	err = g.createData()
+	if err != nil {
+		return err
+	}
+
+	err = g.createErrors()
+	if err != nil {
+		return err
+	}
+
+	err = g.createProvider()
+	if err != nil {
+		return err
+	}
+
+	return g.createConsumer()
+}
+
+func (g *Generator) createService() error {
 	path := "../../../../../"
 	testpath := path + "Tests/"
 	filepath, err := filepath.Abs(testpath)
@@ -209,32 +233,28 @@ func (g *Generator) CreateService() error {
 	return nil
 }
 
-// CreateProvider TODO:
-func (g *Generator) CreateProvider() error {
+func (g *Generator) createProvider() error {
 	for _, service := range g.GenArea.Services {
 		fmt.Println("> Provider: " + service.Name)
 	}
 	return nil
 }
 
-// CreateConsumer TODO:
-func (g *Generator) CreateConsumer() error {
+func (g *Generator) createConsumer() error {
 	for _, service := range g.GenArea.Services {
 		fmt.Println("> Consumer: " + service.Name)
 	}
 	return nil
 }
 
-// CreateData TODO:
-func (g *Generator) CreateData() error {
+func (g *Generator) createData() error {
 	for _, data := range g.GenArea.Composites {
 		fmt.Println("> Data: " + data.Name)
 	}
 	return nil
 }
 
-// CreateErrors TODO:
-func (g *Generator) CreateErrors() error {
+func (g *Generator) createErrors() error {
 	for _, err := range g.GenArea.Errors {
 		fmt.Println("> Error: " + err.Name)
 	}

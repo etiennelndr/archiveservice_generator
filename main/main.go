@@ -72,8 +72,8 @@ func main() {
 		panic(err)
 	}
 
-	// Create each service
-	err = g.CreateService()
+	// Create information in files
+	err = g.CreateInformation()
 	if err != nil {
 		panic(err)
 	}
