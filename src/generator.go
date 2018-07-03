@@ -68,9 +68,7 @@ func (g *Generator) OpenAndReadXML(path string) error {
 
 // InitDirectories create directories and files for each service
 func (g *Generator) InitDirectories() error {
-	path := "../../../../../"
-	testpath := path + "Tests/"
-	filepath, err := filepath.Abs(testpath)
+	filepath, err := testPath()
 	if err != nil {
 		return err
 	}
@@ -131,6 +129,18 @@ func (g *Generator) InitDirectories() error {
 		utils.WriteHeader(f, "provider")
 		f.Close()
 
+		// constants
+		err = os.MkdirAll(name+"constants/", os.ModePerm)
+		if err != nil {
+			return err
+		}
+		f, err = os.Create(name + "constants/constants.go")
+		if err != nil {
+			return err
+		}
+		utils.WriteHeader(f, "constants")
+		f.Close()
+
 		// data
 		err = os.MkdirAll(serviceabspath+"data/", os.ModePerm)
 		if err != nil {
@@ -173,7 +183,9 @@ func (g *Generator) InitDirectories() error {
 
 // CreateInformation TODO:
 func (g *Generator) CreateInformation() error {
-	err := g.createService()
+	err := g.createConstants()
+
+	err = g.createService()
 	if err != nil {
 		return err
 	}
@@ -196,39 +208,181 @@ func (g *Generator) CreateInformation() error {
 	return g.createConsumer()
 }
 
+func (g *Generator) createConstants() error {
+	filepath, err := testPath()
+	if err != nil {
+		return err
+	}
+
+	for _, s := range g.GenArea.Services {
+		var buffer = new(bytes.Buffer)
+		serviceNameToLower := strings.ToLower(s.Name)
+		constantsfile := filepath + "/" + serviceNameToLower + "service/" + serviceNameToLower + "/constants/constants.go"
+
+		file, err := os.OpenFile(constantsfile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		buffer.WriteString("\n// Constants for the " + s.Name + " Service\n")
+		buffer.WriteString("const (\n")
+		buffer.WriteString("\t" + serviceIdentifier(s) + " = \"" + s.Name + "\"\n")
+		buffer.WriteString("\t" + serviceNumber(s) + "     = " + s.Number + "\n")
+		buffer.WriteString(")\n")
+		buffer.WriteString("\nconst (\n")
+		buffer.WriteString("\t" + areaIdentifier(s) + " = \"" + g.GenArea.Name + "\"\n")
+		buffer.WriteString(")\n")
+		if len(s.Operations) != 0 {
+			buffer.WriteString("\n// Constants for the operations\n")
+			buffer.WriteString("const (\n")
+			for _, op := range s.Operations {
+				buffer.WriteString("\tOPERATION_IDENTIFIER_" + strings.ToUpper(op.Name) + " = " + op.Number + "\n")
+			}
+			buffer.WriteString(")\n")
+		}
+
+		_, err = file.Write(buffer.Bytes())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func serviceImports(buf *bytes.Buffer, s Service) {
+	sName := strings.ToLower(s.Name)
+	buf.WriteString("\nimport (\n")
+	buf.WriteString("\t\"github.com/ccsdsmo/malgo/mal\"\n") // FIXME: it might not be generic
+	buf.WriteString("\t\"github.com/ccsdsmo/malgo/com\"\n") // FIXME: same as mal import
+	buf.WriteString("\tcnst \"github.com/etiennelndr/tests/" + sName + "service/" + sName + "/constants\"")
+	buf.WriteString("\n\t\"sync\"\n")
+	buf.WriteString(")\n")
+}
+
+func serviceStructure(buf *bytes.Buffer, serviceName string) {
+	buf.WriteString("\ntype " + serviceName + "Service struct {\n")
+	buf.WriteString("\tAreaIdentifier 	 mal.Identifier\n")
+	buf.WriteString("\tServiceIdentifier mal.Identifier\n")
+	buf.WriteString("\tAreaNumber 		 mal.UShort\n")
+	buf.WriteString("\tServiceNumber 	 mal.Integer\n")
+	buf.WriteString("\tAreaVersion 		 mal.UOctet\n\n")
+	buf.WriteString("\trunning 			 bool\n")
+	buf.WriteString("\twg 				 sync.WaitGroup\n")
+	buf.WriteString("}\n")
+}
+
+func serviceCreateService(buf *bytes.Buffer, s Service, area Area) {
+	buf.WriteString("\nfunc New" + s.Name + "Service() *" + s.Name + "Service {\n")
+	buf.WriteString("\t" + strings.ToLower(s.Name) + "Service := &" + s.Name + "Service{\n")
+	buf.WriteString("\t\tAreaIdentifier: cnst." + areaIdentifier(s) + ",\n")
+	buf.WriteString("\t\tServiceIdentifier: cnst." + serviceIdentifier(s) + ",\n")
+	buf.WriteString("\t\tAreaNumber: com." + strings.ToUpper(area.Name) + "_AREA_NUMBER,\n")
+	buf.WriteString("\t\tServiceNumber: cnst." + serviceNumber(s) + ",\n")
+	buf.WriteString("\t\tAreaVersion: com." + strings.ToUpper(area.Name) + "_AREA_VERSION,\n")
+	buf.WriteString("\t\trunning: true,\n")
+	buf.WriteString("\t\twg: *new(sync.WaitGroup),\n")
+	buf.WriteString("\t}\n")
+	buf.WriteString("\treturn " + strings.ToLower(s.Name) + "Service\n")
+	buf.WriteString("}\n")
+}
+
+func serviceOperations(buf *bytes.Buffer, s Service) {
+	for _, op := range s.Operations {
+		buf.WriteString("\n")
+		// Print the comment of the operation
+		printComment(buf, op.Name+": "+op.Comment)
+
+		// Now print the header and some lines
+		buf.WriteString("func (s *" + s.Name + "Service) " + charsToUpper(op.Name, 0) + " (consumerURL string, providerURL string,")
+		for i, t := range op.Pattern.Messages[0].Types {
+			//println
+			buf.WriteString(" " + charsToLower(t.AdaptType(), 0) + " " + t.AdaptType())
+			if i+1 < len(op.Pattern.Messages[0].Types) {
+				buf.WriteString(",")
+			}
+		}
+		buf.WriteString(") (")
+		for _, t := range op.Pattern.Messages[len(op.Pattern.Messages)-1].Types {
+			if t.Name == "Element" {
+				// TODO: finish this section
+			}
+			buf.WriteString("*" + strings.ToLower(t.Area) + "." + charsToUpper(t.Name, 0) + ", ")
+		}
+		buf.WriteString("error) {\n")
+		// Elements to return
+		buf.WriteString("\treturn nil\n")
+		buf.WriteString("}\n")
+	}
+}
+
+func printComment(buf *bytes.Buffer, comment string) {
+	comment = strings.Replace(comment, "\n", " ", -1)
+	splitComment := strings.Split(comment, " ")
+	splitComment = splitComment[:len(splitComment)-1]
+
+	// Uppercase the first letter
+	splitComment[0] = charsToUpper(splitComment[0], 0)
+	// Put a space between the function name and the ':'
+	splitComment[0] = strings.Replace(splitComment[0], ":", " :", -1)
+
+	var stop = false
+	for i := 0; i < len(splitComment); i++ {
+		var str string
+		stop = false
+		for !stop {
+			if len(str+" "+splitComment[i]) < 64 {
+				str += " " + splitComment[i]
+				if i+1 < len(splitComment) {
+					i++
+				} else {
+					break
+				}
+			} else {
+				stop = true
+			}
+		}
+		buf.WriteString("//" + str + "\n")
+	}
+	if stop {
+		buf.WriteString("// " + splitComment[len(splitComment)-1] + "\n")
+	}
+}
+
 func (g *Generator) createService() error {
-	path := "../../../../../"
-	testpath := path + "Tests/"
-	filepath, err := filepath.Abs(testpath)
+	filepath, err := testPath()
 	if err != nil {
 		return err
 	}
 
 	for _, service := range g.GenArea.Services {
-		var buffer *bytes.Buffer
+		var buffer = new(bytes.Buffer)
 		serviceNameToLower := strings.ToLower(service.Name)
 		servicefile := filepath + "/" + serviceNameToLower + "service/" + serviceNameToLower + "/service/service.go"
 
-		file, err := os.Open(servicefile)
+		file, err := os.OpenFile(servicefile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
 
 		// TODO: Create imports
+		serviceImports(buffer, service)
 
 		// Create the structure for the Service
-		buffer.WriteString("type " + service.Name + "Service struct {\n")
-		buffer.WriteString("\tAreaIdentifier mal.Identifier\n")
-		buffer.WriteString("\tServiceIdentifier mal.Identifier\n")
-		buffer.WriteString("\tAreaNumber mal.UShort\n")
-		buffer.WriteString("\tServiceNumber mal.Integer\n")
-		buffer.WriteString("\tAreaVersion mal.UOctet\n\n")
-		buffer.WriteString("\trunning bool\n")
-		buffer.WriteString("\twg sync.WaitGroup\n")
-		buffer.WriteString("}\n")
+		serviceStructure(buffer, service.Name)
 
-		file.Write(buffer.Bytes())
+		// A method to create a new service
+		serviceCreateService(buffer, service, g.GenArea)
+
+		// Create the operations for each service
+		serviceOperations(buffer, service)
+
+		_, err = file.Write(buffer.Bytes())
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -623,4 +777,44 @@ func AddPubSubOperation(s *Service, operation data.PubSubIP) {
 
 	// Add this new operation to the service
 	s.AddOperation(op)
+}
+
+func testPath() (string, error) {
+	path := "../"
+	testpath := path + "tests/"
+	filepath, err := filepath.Abs(testpath)
+	if err != nil {
+		return "", err
+	}
+	return filepath, nil
+}
+
+func serviceIdentifier(s Service) string {
+	return strings.ToUpper(s.Name) + "_SERVICE_SERVICE_IDENTIFIER"
+}
+
+func serviceNumber(s Service) string {
+	return strings.ToUpper(s.Name) + "_SERVICE_SERVICE_NUMBER"
+}
+
+func areaIdentifier(s Service) string {
+	return strings.ToUpper(s.Name) + "_SERVICE_AREA_IDENTIFIER"
+}
+
+func charsToLower(str string, pos ...int) string {
+	splitstr := strings.Split(str, "")
+	for i := 0; i < len(pos); i++ {
+		splitstr[i] = strings.ToLower(splitstr[i])
+	}
+
+	return strings.Join(splitstr, "")
+}
+
+func charsToUpper(str string, pos ...int) string {
+	splitstr := strings.Split(str, "")
+	for i := 0; i < len(pos); i++ {
+		splitstr[i] = strings.ToUpper(splitstr[i])
+	}
+
+	return strings.Join(splitstr, "")
 }

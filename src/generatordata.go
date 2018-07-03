@@ -73,6 +73,8 @@ type Service struct {
 	Operations   []Operation
 	Composites   []Composite
 	Enumerations []Enumeration
+	// Useful to retrieve all of the abstract types
+	AbstractTypes []string
 }
 
 // CreateService creates a new service and returns it
@@ -83,6 +85,11 @@ func CreateService(name string, number string, comment string) Service {
 		Comment: comment,
 	}
 	return service
+}
+
+// AddAbstractType adds a new abstract type to this service
+func (s *Service) AddAbstractType(t string) {
+	s.AbstractTypes = append(s.AbstractTypes, t)
 }
 
 // AddOperation adds a new operation to the service
@@ -139,6 +146,21 @@ type Type struct {
 	List          string
 	Service       string
 	Area          string
+}
+
+// IsList checks if the type is a list or not
+func (t Type) IsList() bool {
+	return t.List == "true"
+}
+
+// AdaptType is useful to retrieve the real type. Indeed, if
+// this type is a list it returns the name of the type + 'List'.
+// Otherwise only the name is returned.
+func (t Type) AdaptType() string {
+	if t.IsList() {
+		return t.Name + "List"
+	}
+	return t.Name
 }
 
 // Composite TODO:
