@@ -64,6 +64,27 @@ func (a *Area) AddService(s Service) {
 	a.Services = append(a.Services, s)
 }
 
+// AbstractTypes adds a new abstract type to this area
+func (a Area) AbstractTypes() []Composite {
+	var composites []Composite
+	for _, c := range a.Composites {
+		if c.IsAbstract() {
+			composites = append(composites, c)
+		}
+	}
+	return composites
+}
+
+// IsAbstractInArea TODO:
+func (a Area) IsAbstractInArea(data string) bool {
+	for _, c := range a.Composites {
+		if c.Name == data && c.IsAbstract() {
+			return true
+		}
+	}
+	return false
+}
+
 // Service TODO:
 type Service struct {
 	Name    string
@@ -73,8 +94,6 @@ type Service struct {
 	Operations   []Operation
 	Composites   []Composite
 	Enumerations []Enumeration
-	// Useful to retrieve all of the abstract types
-	AbstractTypes []string
 }
 
 // CreateService creates a new service and returns it
@@ -87,9 +106,15 @@ func CreateService(name string, number string, comment string) Service {
 	return service
 }
 
-// AddAbstractType adds a new abstract type to this service
-func (s *Service) AddAbstractType(t string) {
-	s.AbstractTypes = append(s.AbstractTypes, t)
+// AbstractTypes adds a new abstract type to this service
+func (s Service) AbstractTypes() []Composite {
+	var composites []Composite
+	for _, c := range s.Composites {
+		if c.IsAbstract() {
+			composites = append(composites, c)
+		}
+	}
+	return composites
 }
 
 // AddOperation adds a new operation to the service
@@ -105,6 +130,16 @@ func (s *Service) AddComposite(data Composite) {
 // AddEnumeration adds a new composite type to the service
 func (s *Service) AddEnumeration(data Enumeration) {
 	s.Enumerations = append(s.Enumerations, data)
+}
+
+// IsAbstractInService TODO:
+func (s Service) IsAbstractInService(data string) bool {
+	for _, c := range s.Composites {
+		if c.Name == data && c.IsAbstract() {
+			return true
+		}
+	}
+	return false
 }
 
 // Operation TODO:
@@ -168,6 +203,7 @@ type Composite struct {
 	Name          string
 	ShortFormPart string
 	Comment       string
+	isAbstract    bool
 	// Fields
 	Fields []Field
 	// Extends
@@ -191,6 +227,16 @@ func NewComposite(name string, comment string, shortFormPart string, nameOfTypeT
 // AddField add a new field to the composite
 func (c *Composite) AddField(f Field) {
 	c.Fields = append(c.Fields, f)
+}
+
+// IsAbstract TODO:
+func (c Composite) IsAbstract() bool {
+	return c.isAbstract
+}
+
+// MakeAbstract TODO:
+func (c *Composite) MakeAbstract() {
+	c.isAbstract = true
 }
 
 // Field TODO:

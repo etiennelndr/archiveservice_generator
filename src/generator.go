@@ -288,7 +288,7 @@ func serviceCreateService(buf *bytes.Buffer, s Service, area Area) {
 	buf.WriteString("}\n")
 }
 
-func serviceOperations(buf *bytes.Buffer, s Service) {
+func serviceOperations(buf *bytes.Buffer, s Service, a Area) {
 	for _, op := range s.Operations {
 		buf.WriteString("\n")
 		// Print the comment of the operation
@@ -297,18 +297,21 @@ func serviceOperations(buf *bytes.Buffer, s Service) {
 		// Now print the header and some lines
 		buf.WriteString("func (s *" + s.Name + "Service) " + charsToUpper(op.Name, 0) + " (consumerURL string, providerURL string,")
 		for i, t := range op.Pattern.Messages[0].Types {
-			//println
-			buf.WriteString(" " + charsToLower(t.AdaptType(), 0) + " " + t.AdaptType())
+			buf.WriteString(" " + charsToLower(t.AdaptType(), 0) + " " + strings.ToLower(t.Area) + "." + t.AdaptType())
 			if i+1 < len(op.Pattern.Messages[0].Types) {
 				buf.WriteString(",")
 			}
 		}
 		buf.WriteString(") (")
+		// Types to return
 		for _, t := range op.Pattern.Messages[len(op.Pattern.Messages)-1].Types {
-			if t.Name == "Element" {
-				// TODO: finish this section
+			lowercaseName := strings.ToLower(t.Name)
+			// If this element is not abstract it must be a pointer
+			if lowercaseName != "element" && lowercaseName != "attribute" && lowercaseName != "composite" &&
+				!a.IsAbstractInArea(t.Name) && !s.IsAbstractInService(t.Name) {
+				buf.WriteString("*")
 			}
-			buf.WriteString("*" + strings.ToLower(t.Area) + "." + charsToUpper(t.Name, 0) + ", ")
+			buf.WriteString(strings.ToLower(t.Area) + "." + charsToUpper(t.Name, 0) + ", ")
 		}
 		buf.WriteString("error) {\n")
 		// Elements to return
@@ -377,7 +380,7 @@ func (g *Generator) createService() error {
 		serviceCreateService(buffer, service, g.GenArea)
 
 		// Create the operations for each service
-		serviceOperations(buffer, service)
+		serviceOperations(buffer, service, g.GenArea)
 
 		_, err = file.Write(buffer.Bytes())
 		if err != nil {
@@ -478,7 +481,9 @@ func (g *Generator) RetrieveInformation() {
 
 			// Retrieve the service data types
 			for _, comp := range service.Datas.Composites {
+				// Create the composite
 				c := createComposite(comp)
+				// Then add it to the service
 				s.AddComposite(c)
 			}
 
@@ -522,6 +527,10 @@ func createComposite(composite data.Composite) Composite {
 			TypeName:  field.FieldType.Name,
 		}
 		c.AddField(f)
+	}
+
+	if len(c.Fields) == 0 {
+		c.MakeAbstract()
 	}
 
 	return c
