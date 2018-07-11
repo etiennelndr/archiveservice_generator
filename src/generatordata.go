@@ -78,8 +78,8 @@ func (a Area) AbstractTypes() []Composite {
 // IsAbstractInArea TODO:
 func (a Area) IsAbstractInArea(data string) bool {
 	for _, c := range a.Composites {
-		if c.Name == data && c.IsAbstract() {
-			return true
+		if c.Name == data {
+			return c.IsAbstract()
 		}
 	}
 	return false
